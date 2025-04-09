@@ -14,7 +14,7 @@ qb = Client(qb_url)
 qb.login(qb_username, qb_password)
 torrents = qb.torrents()
 check_torrents=[]
-state = 'pausedDL' if iyuu else 'checkingUP'
+state = 'pausedDL' if iyuu else 'checkingUP'  #stoppedDL或者pausedDL
 for torrent in torrents:
      if torrent['state'] == state:
          check_torrents.append(torrent)
