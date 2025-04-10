@@ -2,22 +2,32 @@ import os, shutil
 from qbittorrent import Client
 from urllib.parse import parse_qs
 import time
+import requests  # 新增 requests 库用于直接调用 API
 
 qb_url = ''
 qb_username = ''
 qb_password = ''
 qb_backup_path = ''
 tmp_path = os.getcwd() + '/'
-iyuu = False
+iyuu = True
+
+# 新增函数：通过 Web API 添加标签
+def add_tag_to_torrent(hash, tag):
+    session = requests.Session()
+    session.post(f"{qb_url}/api/v2/auth/login", 
+                data={'username': qb_username, 'password': qb_password})
+    session.post(f"{qb_url}/api/v2/torrents/addTags", 
+                data={'hashes': hash, 'tags': tag})
 
 qb = Client(qb_url)
 qb.login(qb_username, qb_password)
 torrents = qb.torrents()
 check_torrents=[]
-state = 'pausedDL' if iyuu else 'checkingUP'  #stoppedDL或者pausedDL
+state = 'stoppedDL' if iyuu else 'checkingUP'  #stoppedDL或者pausedDL
 for torrent in torrents:
-     if torrent['state'] == state:
-         check_torrents.append(torrent)
+    #print(torrent['state'])
+    if torrent['state'] == state:
+        check_torrents.append(torrent)
 print('Get', len(check_torrents), 'torrents.')
 for torrent in check_torrents:
     filename = torrent['hash'] + '.torrent'
@@ -30,6 +40,7 @@ for torrent in check_torrents:
     if iyuu and 'tr' in params.keys() and params['tr']:
         time.sleep(1)
         qb.add_trackers(torrent['hash'], params['tr'])
+        add_tag_to_torrent(torrent['hash'], "IYUU自动辅种")
         os.remove(tmp_path + filename)
     if not iyuu:
         os.remove(tmp_path + filename)
